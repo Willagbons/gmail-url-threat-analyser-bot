@@ -6,6 +6,24 @@ A Python-based bot that monitors Gmail for new emails, extracts URLs, and scans 
 
 The bot integrates with Gmail through Selenium WebDriver for reliable email monitoring. It uses regex patterns to extract URLs from email content and submits them to urlscan.io's scanning service. The threat analysis includes blacklist checking, malicious behavior detection, and suspicious category identification. All activities are logged for monitoring and debugging purposes.
 
+
+## Threat Scoring
+
+Threat scores are based on multiple factors:
+- **Blacklisted IPs/Domains**: URLs associated with known malicious entities
+- **Suspicious Categories**: Phishing, malware, scam indicators
+- **Malicious Behavior**: Detected malicious activities during scanning
+- **High Request Counts**: Unusual number of external requests
+- **Suspicious Domains**: Domains with suspicious characteristics
+
+## Security Considerations
+
+- **App Passwords**: Always use Gmail app passwords, never regular passwords
+- **API Keys**: Store API keys securely in environment variables
+- **Log Files**: Review log files regularly for security insights
+- **Browser Security**: The bot runs in a controlled browser environment
+
+
 ## Requirements
 
 You'll need Python 3.7 or higher, Chrome browser installed, and a Gmail account with app password enabled. An urlscan.io API key is optional but recommended for higher rate limits.
@@ -100,30 +118,6 @@ threat-analyzer-bot/
 └── README.md           # This file
 ```
 
-## How It Works
-
-1. **Gmail Monitoring**: Uses Selenium WebDriver to automate Chrome browser interactions with Gmail
-2. **Email Processing**: Extracts email content including sender, subject, and body
-3. **URL Extraction**: Uses regex patterns to find URLs in email content
-4. **Threat Scanning**: Submits URLs to urlscan.io for comprehensive security analysis
-5. **Alert Generation**: Creates alerts for URLs with threat scores above 50%
-6. **Logging**: Records all activities and scan results for monitoring
-
-## Threat Scoring
-
-The bot calculates threat scores based on multiple factors:
-- **Blacklisted IPs/Domains**: URLs associated with known malicious entities
-- **Suspicious Categories**: Phishing, malware, scam indicators
-- **Malicious Behavior**: Detected malicious activities during scanning
-- **High Request Counts**: Unusual number of external requests
-- **Suspicious Domains**: Domains with suspicious characteristics
-
-## Security Considerations
-
-- **App Passwords**: Always use Gmail app passwords, never regular passwords
-- **API Keys**: Store API keys securely in environment variables
-- **Log Files**: Review log files regularly for security insights
-- **Browser Security**: The bot runs in a controlled browser environment
 
 ## Troubleshooting
 
@@ -170,13 +164,6 @@ LOG_LEVEL=DEBUG
 
 This tool is for educational and security research purposes. Always ensure you have permission to scan URLs and comply with relevant laws and terms of service. The authors are not responsible for any misuse of this software.
 
-## Support
-
-If you encounter issues or have questions:
-1. Check the troubleshooting section above
-2. Review the log files for error details
-3. Open an issue on GitHub with detailed information
-4. Include relevant log excerpts and error messages
 
 ## Acknowledgments
 
