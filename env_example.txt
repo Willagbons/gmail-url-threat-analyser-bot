@@ -1,0 +1,33 @@
+# Gmail Credentials (Required)
+GMAIL_USERNAME=your.email@gmail.com
+GMAIL_PASSWORD=your_app_password
+
+# URLScan.io API Key (Optional - for higher rate limits)
+URLSCAN_API_KEY=your_urlscan_api_key
+
+# Bot Settings
+CHECK_INTERVAL=60
+MAX_EMAILS_PER_CHECK=10
+
+# Chrome WebDriver Settings
+CHROME_HEADLESS=true
+CHROME_WINDOW_SIZE=1920,1080
+
+# Logging Settings
+LOG_LEVEL=INFO
+LOG_FILE=threat_analyzer.log
+
+# Alert Settings
+ALERT_FILE=security_alerts.log
+ENABLE_EMAIL_ALERTS=false
+
+# Threat Detection Settings
+ENABLE_CONTENT_ANALYSIS=true
+ENABLE_URL_SCANNING=true
+
+# Email Alert Settings (Optional - for sending alerts via email)
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your.alert.email@gmail.com
+SMTP_PASSWORD=your_smtp_password
+ALERT_RECIPIENT=recipient@example.com 
