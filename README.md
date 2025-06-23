@@ -1,15 +1,15 @@
 # Gmail URL Scanner Bot
 
-A Python-based security tool that monitors Gmail for new emails, extracts URLs, and scans them for threats using urlscan.io. The bot provides real-time threat detection and alerting for suspicious URLs found in emails.
+A Python-based bot that monitors Gmail for new emails, extracts URLs, and scans them for threats using urlscan.io. The bot provides real-time threat detection and alerting for suspicious URLs found in emails.
 
 ## Features
 
-- **Gmail Integration**: Automatically monitors Gmail inbox for new emails
-- **URL Extraction**: Extracts URLs from email subjects and bodies using regex
-- **Threat Scanning**: Scans URLs with urlscan.io for comprehensive threat analysis
-- **Real-time Alerts**: Generates alerts for URLs with high threat scores
-- **Browser Automation**: Uses Selenium for reliable Gmail interaction
-- **Logging**: Comprehensive logging for monitoring and debugging
+The bot integrates with Gmail through Selenium WebDriver for reliable email monitoring. It uses regex patterns to extract URLs from email content and submits them to urlscan.io's scanning service. The threat analysis includes blacklist checking, malicious behavior detection, and suspicious category identification. All activities are logged for monitoring and debugging purposes.
+
+## Requirements
+
+You'll need Python 3.7 or higher, Chrome browser installed, and a Gmail account with app password enabled. An urlscan.io API key is optional but recommended for higher rate limits.
+
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ A Python-based security tool that monitors Gmail for new emails, extracts URLs, 
 - Chrome browser installed
 - ChromeDriver (will be downloaded automatically)
 - Gmail account with app password enabled
-- urlscan.io API key (optional, but recommended)
+- urlscan.io API key
 
 ## Installation
 
@@ -165,9 +165,6 @@ LOG_LEVEL=DEBUG
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Disclaimer
 
