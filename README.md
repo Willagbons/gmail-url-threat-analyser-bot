@@ -122,11 +122,6 @@ emails = gmail_monitor.get_new_emails(max_emails=50)  # Default: 20
 TIMEOUT_SECONDS = 120  # Default: 90 seconds
 ```
 
-### Test Login
-```bash
-python test_login.py
-```
-
 ## How It Works
 
 1. **Gmail Integration**: Uses Selenium to automate Chrome, log into Gmail, and extract email content
