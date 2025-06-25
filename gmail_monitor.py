@@ -224,20 +224,17 @@ class GmailMonitor:
             print(f"Error during login: {e}")
             return False
     
-    def get_new_emails(self, max_emails: int = 10) -> List[Dict]:
+    def get_new_emails(self, max_emails: int = 10) -> list:
         """
         Get new emails from Gmail inbox.
-        
         Retrieves emails and extracts their content using multiple selector strategies
         to handle Gmail's dynamic interface.
         """
         try:
-            # Ensure we're on the inbox page
             if "mail.google.com/mail/u/0/#inbox" not in self.driver.current_url:
                 self.driver.get("https://mail.google.com/mail/u/0/#inbox")
                 time.sleep(3)
-            
-            # Try multiple selectors for email rows
+
             email_row_selectors = [
                 "tr[role='row']",
                 "div[role='row']",
@@ -245,7 +242,7 @@ class GmailMonitor:
                 "div[class*='message-row']",
                 "tr[class*='message']"
             ]
-            
+
             email_rows = []
             for selector in email_row_selectors:
                 try:
@@ -254,41 +251,27 @@ class GmailMonitor:
                     )
                     email_rows = self.driver.find_elements(By.CSS_SELECTOR, selector)
                     if email_rows:
-                        logging.info(f"Found {len(email_rows)} email rows using selector: {selector}")
                         break
                 except:
                     continue
-            
+
             if not email_rows:
-                logging.warning("No email rows found with any selector")
                 return []
-            
+
             new_emails = []
-            
-            # Process each email row
             for row in email_rows[:max_emails]:
                 try:
-                    # Get email ID for duplicate detection
                     email_id = self._get_email_id(row)
-                    
                     if email_id and email_id not in self.processed_emails:
-                        # Extract email details
                         email_data = self._extract_email_data(row)
-                        
-                        if email_data and email_data.get('sender'):
+                        if email_data and email_data.get('body'):
                             email_data['id'] = email_id
                             new_emails.append(email_data)
                             self.processed_emails.add(email_id)
-                        
                 except Exception as e:
-                    logging.warning(f"Error processing email row: {e}")
                     continue
-            
-            logging.info(f"Found {len(new_emails)} new emails")
             return new_emails
-            
         except Exception as e:
-            logging.error(f"Error getting new emails: {e}")
             return []
     
     def _get_email_id(self, row) -> Optional[str]:
@@ -296,8 +279,8 @@ class GmailMonitor:
         try:
             # Try multiple methods to get email ID
             email_id = (
-                row.get_attribute("data-legacy-thread-id") or
                 row.get_attribute("id") or
+                row.get_attribute("data-legacy-thread-id") or
                 row.get_attribute("data-thread-id")
             )
             
@@ -325,14 +308,19 @@ class GmailMonitor:
                 "td[aria-label*='@']",
                 "td span[email]",
                 "td[class*='sender']",
-                "td[class*='from']"
+                "td[class*='from']",
+                "td[role='gridcell'] span[email]",
+                "td[role='gridcell'] span[title*='@']",
+                "td[role='gridcell'] span[aria-label*='@']",
+                "td span[title*='@']",
+                "td span[aria-label*='@']"
             ]
             
             for selector in sender_selectors:
                 try:
                     sender_element = row.find_element(By.CSS_SELECTOR, selector)
-                    sender = sender_element.get_attribute("data-tooltip") or sender_element.get_attribute("title") or sender_element.text
-                    if sender and '@' in sender:
+                    sender = sender_element.get_attribute("data-tooltip") or sender_element.get_attribute("title") or sender_element.get_attribute("aria-label") or sender_element.text
+                    if sender and '@' in sender and sender != "Select":
                         break
                 except:
                     continue
@@ -375,12 +363,51 @@ class GmailMonitor:
                 except:
                     pass
             
-            # Click to open email for body extraction
-            try:
-                row.click()
-                time.sleep(2)
-            except Exception as e:
-                logging.warning(f"Could not click email row: {e}")
+            # Try to click email row with multiple strategies to handle interception
+            click_success = False
+            click_strategies = [
+                # Strategy 1: Try to dismiss overlays first, then click
+                lambda: self._click_with_overlay_dismissal(row),
+                # Strategy 2: Use JavaScript click
+                lambda: self._click_with_javascript(row),
+                # Strategy 3: Try to scroll to element and click
+                lambda: self._click_with_scroll(row),
+                # Strategy 4: Try to click on a specific part of the row
+                lambda: self._click_on_row_part(row),
+                # Strategy 5: Last resort - try direct click
+                lambda: row.click()
+            ]
+            
+            for i, strategy in enumerate(click_strategies):
+                try:
+                    strategy()
+                    time.sleep(2)
+                    # Check if we successfully opened an email (look for email body)
+                    body_selectors = [
+                        "div[role='main'] div[dir='ltr']",
+                        "div[role='main'] div[data-message-id]",
+                        "div[role='main'] div[class*='message']",
+                        "div[data-testid='message-content']"
+                    ]
+                    
+                    for body_selector in body_selectors:
+                        try:
+                            body_elements = self.driver.find_elements(By.CSS_SELECTOR, body_selector)
+                            if any(len(el.text) > 20 for el in body_elements):
+                                click_success = True
+                                break
+                        except:
+                            continue
+                    
+                    if click_success:
+                        break
+                        
+                except Exception as e:
+                    logging.warning(f"Click strategy {i+1} failed: {e}")
+                    continue
+            
+            if not click_success:
+                logging.warning("All click strategies failed for email row")
                 return None
             
             # Get email body content
@@ -399,6 +426,75 @@ class GmailMonitor:
         except Exception as e:
             logging.warning(f"Error extracting email data: {e}")
             return None
+    
+    def _click_with_overlay_dismissal(self, row):
+        """Try to dismiss overlays before clicking."""
+        try:
+            # Try to dismiss notification prompts
+            overlay_selectors = [
+                "span[id='link_enable_notifications_hide']",
+                "div[class='vh']",
+                "div[tabindex='0'][role='button'][class='bBe']",
+                "div[aria-label*='Close']",
+                "button[aria-label*='Close']",
+                "span[class='a8k']"
+            ]
+            
+            for selector in overlay_selectors:
+                try:
+                    overlay = self.driver.find_element(By.CSS_SELECTOR, selector)
+                    if overlay.is_displayed():
+                        overlay.click()
+                        time.sleep(1)
+                except:
+                    continue
+            
+            # Now try to click the row
+            row.click()
+            
+        except Exception as e:
+            raise e
+    
+    def _click_with_javascript(self, row):
+        """Use JavaScript to click the element."""
+        try:
+            self.driver.execute_script("arguments[0].click();", row)
+        except Exception as e:
+            raise e
+    
+    def _click_with_scroll(self, row):
+        """Scroll to element and then click."""
+        try:
+            self.driver.execute_script("arguments[0].scrollIntoView(true);", row)
+            time.sleep(1)
+            row.click()
+        except Exception as e:
+            raise e
+    
+    def _click_on_row_part(self, row):
+        """Try to click on a specific part of the row that might be clickable."""
+        try:
+            # Try to find clickable elements within the row
+            clickable_selectors = [
+                "td[role='gridcell']",
+                "td[class*='subject']",
+                "td[class*='sender']",
+                "span[dir='ltr']"
+            ]
+            
+            for selector in clickable_selectors:
+                try:
+                    element = row.find_element(By.CSS_SELECTOR, selector)
+                    element.click()
+                    return
+                except:
+                    continue
+            
+            # If no specific element found, try the row itself
+            row.click()
+            
+        except Exception as e:
+            raise e
     
     def _get_email_body(self) -> str:
         """Extract email body content using multiple selector strategies."""
